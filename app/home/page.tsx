@@ -29,7 +29,7 @@ export default function HomePage() {
       title: 'Reflexology Session',
       description: 'Experience deep relaxation and energy balancing through targeted pressure points. Our expert practitioners help restore your body\'s natural flow.',
       duration: '20 minutes per session',
-      images: ['/wellness/reflex1.jpg', '/wellness/reflex2.jpg']
+      images: ['/wellness/reflex1.png', '/wellness/reflex2.png']
     },
     drinks: {
       title: 'Premium Wellness Drinks',
@@ -40,7 +40,7 @@ export default function HomePage() {
         'Innermost Electrolytes - Essential minerals',
         'Chaga Elixir - Immune support'
       ],
-      images: ['/drinks/drinks1.jpg', '/drinks/drinks2.jpg']
+      images: ['/drinks/drinks1.png', '/drinks/drinks2.png']
     }
   }
 
