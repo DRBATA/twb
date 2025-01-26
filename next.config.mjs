@@ -1,5 +1,8 @@
+import createMDX from '@next/mdx'
+
 /** @type {import('next').NextConfig} */
 const config = {
+  pageExtensions: ['js', 'jsx', 'mdx', 'ts', 'tsx'],
   generateBuildId: async () => {
     // This will generate a new build ID on each build
     return `build-${Date.now()}`
@@ -23,4 +26,11 @@ const config = {
   }
 }
 
-export default config
+const withMDX = createMDX({
+  options: {
+    remarkPlugins: [],
+    rehypePlugins: [],
+  },
+})
+
+export default withMDX(config)

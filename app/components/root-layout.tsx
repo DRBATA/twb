@@ -24,6 +24,9 @@ export function RootLayout({ children }: RootLayoutProps) {
               <Link href="/" className="text-white hover:text-gray-300">
                 Explore
               </Link>
+              <Link href="/blog" className="text-white hover:text-gray-300">
+                Blog
+              </Link>
             </div>
           </div>
         </div>

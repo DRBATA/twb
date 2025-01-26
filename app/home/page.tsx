@@ -40,7 +40,7 @@ export default function HomePage() {
         'Innermost Electrolytes - Essential minerals',
         'Chaga Elixir - Immune support'
       ],
-      images: ['/drinks/drinks1.png', '/drinks/drinks2.png']
+      images: ['/drinks/drinks1.webp', '/drinks/drinks2.tif', '/drinks/drinks3.webp', '/drinks/drinks4.webp']
     }
   }
 
