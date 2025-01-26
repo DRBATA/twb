@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 
 export function UpcomingPartyModal() {
@@ -16,9 +15,13 @@ export function UpcomingPartyModal() {
     return () => clearTimeout(timer)
   }, [])
 
+  if (!isOpen) return null
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="bg-black/90 border-rose-500/20 max-w-xl">
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+        <div className="relative z-50 bg-black/90 rounded-lg max-w-xl w-full p-6 shadow-2xl border border-rose-500/20">
           <h2 className="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-rose-100 via-teal-100 to-rose-100">
             SUNDAY MORNING BOAT PARTY
           </h2>
@@ -26,13 +29,25 @@ export function UpcomingPartyModal() {
           
           {/* Horizontal Scrolling Content */}
           <div className="relative">
+            {/* Navigation Buttons */}
+            <button 
+              onClick={() => setActiveSection(prev => Math.max(0, prev - 1))}
+              className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/50 backdrop-blur-sm border border-rose-500/20 text-white transition-opacity duration-200 hover:bg-black/70 ${activeSection === 0 ? 'opacity-0' : 'opacity-100'}`}
+              disabled={activeSection === 0}
+            >
+              ←
+            </button>
+            <button 
+              onClick={() => setActiveSection(prev => Math.min(3, prev + 1))}
+              className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/50 backdrop-blur-sm border border-rose-500/20 text-white transition-opacity duration-200 hover:bg-black/70 ${activeSection === 3 ? 'opacity-0' : 'opacity-100'}`}
+              disabled={activeSection === 3}
+            >
+              →
+            </button>
+
             <div 
-              className="overflow-x-auto snap-x snap-mandatory flex space-x-4 pb-4 -mx-2 px-2"
-              onScroll={(e) => {
-                const target = e.target as HTMLDivElement
-                const section = Math.round(target.scrollLeft / target.clientWidth)
-                setActiveSection(section)
-              }}
+              className="overflow-hidden flex transition-transform duration-300 ease-in-out"
+              style={{ transform: `translateX(-${activeSection * 100}%)` }}
             >
               {/* Section 1: Event Details */}
               <div className="flex-none w-full snap-center space-y-4 text-gray-300">
@@ -108,7 +123,8 @@ export function UpcomingPartyModal() {
               Explore Experiences
             </Button>
           </div>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </>
   )
 }
