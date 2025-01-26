@@ -4,10 +4,11 @@ import { useState } from 'react'
 import { VideoBackground } from '@/components/video-background'
 import { Button } from '@/components/ui/button'
 import { ExperienceModal } from '@/components/experience-modal'
-import { UpcomingPartyModal } from '@/components/upcoming-party-modal'
+import { BookingsModal } from '@/components/bookings-modal'
 
 export default function HomePage() {
   const [selectedExperience, setSelectedExperience] = useState<string | null>(null)
+  const [isPartyModalOpen, setIsPartyModalOpen] = useState(false)
 
   const experiences = {
     yacht: {
@@ -46,7 +47,7 @@ export default function HomePage() {
 
   return (
     <main className="relative min-h-screen">
-      <UpcomingPartyModal />
+      <BookingsModal isOpen={isPartyModalOpen} onCloseAction={() => setIsPartyModalOpen(false)} />
       <VideoBackground />
       
       <div className="relative z-10 min-h-screen text-white">
@@ -61,7 +62,7 @@ export default function HomePage() {
               sunrise over Dubai Creek, a view unobstructed by cityscapes, and embrace the benefits of 
               early-morning light exposure.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
+            <div className="flex flex-wrap justify-center gap-4 mb-6">
               {Object.entries(experiences).map(([key, exp]) => (
                 <Button 
                   key={key}
@@ -75,6 +76,15 @@ export default function HomePage() {
                 </Button>
               ))}
             </div>
+            <Button 
+              onClick={() => setIsPartyModalOpen(true)}
+              className="mt-12 bg-teal-500/90 hover:bg-teal-600 text-white text-xl px-12 py-6
+                shadow-lg shadow-teal-500/20 transition-all duration-300 
+                hover:shadow-xl hover:shadow-teal-500/30 hover:scale-[1.02] active:scale-100
+                border-2 border-teal-400/20"
+            >
+              Book Now
+            </Button>
           </div>
         </div>
 
@@ -82,7 +92,7 @@ export default function HomePage() {
         {selectedExperience && (
           <ExperienceModal
             experience={experiences[selectedExperience as keyof typeof experiences]}
-            onClose={() => setSelectedExperience(null)}
+            onCloseAction={() => setSelectedExperience(null)}
           />
         )}
 

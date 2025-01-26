@@ -16,32 +16,32 @@ interface ExperienceModalProps {
     duration?: string
     options?: string[]
   }
-  onClose: () => void
+  onCloseAction: () => void
 }
 
-export function ExperienceModal({ experience, onClose }: ExperienceModalProps) {
+export function ExperienceModal({ experience, onCloseAction }: ExperienceModalProps) {
   // Close on escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') onCloseAction()
     }
     window.addEventListener('keydown', handleEscape)
     return () => window.removeEventListener('keydown', handleEscape)
-  }, [onClose])
+  }, [onCloseAction])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={onCloseAction}
       />
 
       {/* Modal */}
       <div className="relative w-full max-w-4xl mx-4 bg-black/80 rounded-lg shadow-2xl overflow-hidden">
         {/* Close button */}
         <button
-          onClick={onClose}
+          onClick={onCloseAction}
           className="absolute top-4 right-4 text-white/60 hover:text-white z-10"
           aria-label="Close experience details"
         >
