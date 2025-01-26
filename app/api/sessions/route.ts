@@ -1,7 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { Pool } from "pg"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "../auth/[...nextauth]/route"
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -12,23 +10,29 @@ const pool = new Pool({
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session || !session.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const searchParams = request.nextUrl.searchParams
     const date = searchParams.get("date")
 
+    // If no date provided, return available dates
     if (!date) {
-      return NextResponse.json({ error: "Date parameter is required" }, { status: 400 })
+      const availableDates = await pool.query(
+        `
+        SELECT DISTINCT date
+        FROM yacht_sessions
+        WHERE date >= CURRENT_DATE
+        ORDER BY date
+        LIMIT 30
+        `
+      )
+      return NextResponse.json({
+        dates: availableDates.rows.map(row => row.date)
+      })
     }
 
     const yachtSessions = await pool.query(
       `
       SELECT *, 
-        65 AS price,
-        0 AS member_price
+        65 AS price
       FROM yacht_sessions
       WHERE date = $1
       ORDER BY start_time
@@ -39,8 +43,7 @@ export async function GET(request: NextRequest) {
     const wellnessSessions = await pool.query(
       `
       SELECT *, 
-        45 AS price,
-        30 AS member_price
+        45 AS price
       FROM wellness_sessions
       WHERE yacht_session_date = $1
       ORDER BY start_time, type
@@ -50,7 +53,8 @@ export async function GET(request: NextRequest) {
 
     const drinks = await pool.query(
       `
-      SELECT *
+      SELECT *,
+        price_non_member AS price
       FROM drinks
     `,
     )
@@ -65,4 +69,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed to fetch sessions" }, { status: 500 })
   }
 }
-

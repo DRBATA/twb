@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession, signIn } from 'next-auth/react'
 import { format } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
@@ -13,9 +12,7 @@ interface BookingsModalProps {
 }
 
 export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
-  const { data: session, status } = useSession()
   const [activeSection, setActiveSection] = useState(0)
-  const [isSubscribed, setIsSubscribed] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [availableDates, setAvailableDates] = useState<Date[]>([])
   const [yachtSessions, setYachtSessions] = useState<any[]>([])
@@ -25,18 +22,14 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
   const [selectedWellnessSession, setSelectedWellnessSession] = useState<any>(null)
   const [selectedDrinks, setSelectedDrinks] = useState<any[]>([])
 
-  // Fetch subscription status when authenticated
   useEffect(() => {
-    if (session?.user?.id) {
-      fetchSubscriptionStatus()
-    }
-    if (session?.user?.id) {
+    if (isOpen) {
       fetchAvailableDates()
     }
-  }, [session])
+  }, [isOpen])
 
   useEffect(() => {
-    if (selectedDate && session) {
+    if (selectedDate) {
       fetchSessions()
     }
   }, [selectedDate])
@@ -59,41 +52,24 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
     try {
       const response = await fetch('/api/sessions')
       const data = await response.json()
-      // Convert date strings to Date objects
-      setAvailableDates(data.dates.map((dateStr: string) => new Date(dateStr)))
+      // Convert date strings to Date objects and set to midnight UTC
+      const dates = data.dates.map((dateStr: string) => {
+        const date = new Date(dateStr)
+        return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+      })
+      setAvailableDates(dates)
     } catch (error) {
       console.error('Error fetching available dates:', error)
     }
   }
 
-  const fetchSubscriptionStatus = async () => {
-    try {
-      const response = await fetch('/api/user/subscription-status')
-      const data = await response.json()
-      setIsSubscribed(data.isSubscribed)
-    } catch (error) {
-      console.error('Error fetching subscription status:', error)
-    }
-  }
-
-  const handleSubscribe = async () => {
-    try {
-      const response = await fetch('/api/subscriptions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ action: 'subscribe' }),
-      })
-
-      if (!response.ok) throw new Error('Failed to subscribe')
-
-      const data = await response.json()
-      setIsSubscribed(true)
-      console.log('Subscription successful:', data)
-    } catch (error) {
-      console.error('Error subscribing:', error)
-    }
+  const isDateDisabled = (date: Date) => {
+    return !availableDates.some(
+      availableDate => 
+        availableDate.getFullYear() === date.getFullYear() &&
+        availableDate.getMonth() === date.getMonth() &&
+        availableDate.getDate() === date.getDate()
+    )
   }
 
   const calculateTotal = () => {
@@ -101,41 +77,20 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
 
     // Add yacht session cost
     if (selectedYachtSession) {
-      total += isSubscribed ? 0 : selectedYachtSession.price
+      total += selectedYachtSession.price
     }
 
     // Add wellness session cost
     if (selectedWellnessSession) {
-      total += isSubscribed ? selectedWellnessSession.member_price : selectedWellnessSession.price
+      total += selectedWellnessSession.price
     }
 
     // Add drinks cost
     selectedDrinks.forEach(drink => {
-      total += isSubscribed ? drink.price_member : drink.price_non_member
+      total += drink.price_non_member
     })
 
     return total
-  }
-
-  const calculateSavings = () => {
-    let savings = 0
-
-    // Calculate yacht session savings
-    if (selectedYachtSession) {
-      savings += selectedYachtSession.price
-    }
-
-    // Calculate wellness session savings
-    if (selectedWellnessSession) {
-      savings += selectedWellnessSession.price - selectedWellnessSession.member_price
-    }
-
-    // Calculate drinks savings
-    selectedDrinks.forEach(drink => {
-      savings += drink.price_non_member - drink.price_member
-    })
-
-    return savings
   }
 
   const handleBooking = async () => {
@@ -174,8 +129,7 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
   }
 
   const handleNext = () => {
-    // Add validation logic here before allowing next
-    setActiveSection(prev => Math.min(3, prev + 1))
+    setActiveSection(prev => Math.min(2, prev + 1))
   }
 
   const handleBack = () => {
@@ -206,92 +160,26 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
             </button>
             <button 
               onClick={handleNext}
-              className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/50 backdrop-blur-sm border border-rose-500/20 text-white transition-opacity duration-200 hover:bg-black/70 ${activeSection === 3 ? 'opacity-0' : 'opacity-100'}`}
-              disabled={activeSection === 3}
+              className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/50 backdrop-blur-sm border border-rose-500/20 text-white transition-opacity duration-200 hover:bg-black/70 ${activeSection === 2 ? 'opacity-0' : 'opacity-100'}`}
+              disabled={activeSection === 2}
             >
               →
             </button>
 
-            {/* Section 0: Authentication & Subscription */}
+            {/* Section 0: Date Selection */}
             <div className={`absolute inset-0 px-8 space-y-4 text-gray-300 transition-opacity duration-300 ${activeSection === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-              {status === 'loading' ? (
-                <div className="text-center py-8">Loading...</div>
-              ) : !session ? (
-                <div className="text-center py-8 space-y-4">
-                  <h3 className="text-xl font-semibold text-rose-300">Sign in to Continue</h3>
-                  <p>Please sign in to book your wellness experience</p>
-                  <Button 
-                    onClick={() => signIn()}
-                    className="bg-rose-500 hover:bg-rose-600 text-white px-8 py-2"
-                  >
-                    Sign In
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-semibold text-rose-300">Welcome, {session.user?.name}</h3>
-                    <p>Choose your booking option:</p>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    {isSubscribed ? (
-                      <div className="bg-green-500/20 p-4 rounded-lg space-y-2">
-                        <p className="font-semibold text-green-300">✓ You're a Member!</p>
-                        <p>Enjoy free yacht sessions and discounted experiences</p>
-                        <Button
-                          onClick={handleNext}
-                          className="w-full bg-green-500 hover:bg-green-600 text-white"
-                        >
-                          Continue to Booking
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <div className="bg-rose-500/20 p-4 rounded-lg space-y-2">
-                          <h4 className="font-semibold">Monthly Membership - $150</h4>
-                          <ul className="space-y-1 text-sm">
-                            <li>• Free yacht sessions (Save $65 per session)</li>
-                            <li>• Discounted wellness experiences</li>
-                            <li>• Member prices on drinks</li>
-                          </ul>
-                          <Button
-                            onClick={handleSubscribe}
-                            className="w-full bg-rose-500 hover:bg-rose-600 text-white mt-2"
-                          >
-                            Subscribe Now
-                          </Button>
-                        </div>
-                        <div className="text-center">
-                          <Button
-                            onClick={handleNext}
-                            variant="outline"
-                            className="text-rose-300 border-rose-300 hover:bg-rose-500/20"
-                          >
-                            Continue without Subscribing
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Section 1: Date Selection */}
-            <div className={`absolute inset-0 px-8 space-y-4 text-gray-300 transition-opacity duration-300 ${activeSection === 1 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
               <h3 className="text-xl font-semibold text-rose-300">Select Your Date</h3>
               <div className="bg-white/5 rounded-lg p-4">
                 <Calendar
                   selected={selectedDate}
                   onSelect={setSelectedDate}
                   className="rounded-md border border-rose-500/20"
-                  disabled={(date: Date) => !availableDates.some(
-                    availableDate => 
-                      availableDate.getFullYear() === date.getFullYear() &&
-                      availableDate.getMonth() === date.getMonth() &&
-                      availableDate.getDate() === date.getDate()
-                  )}
+                  disabled={(date: Date) => {
+                    // Disable past dates
+                    if (date < new Date()) return true;
+                    // Disable dates not in available dates
+                    return isDateDisabled(date);
+                  }}
                 />
                 {selectedDate && (
                   <div className="mt-4 text-center">
@@ -307,8 +195,8 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
               </div>
             </div>
 
-            {/* Section 2: Session Selection */}
-            <div className={`absolute inset-0 px-8 space-y-4 text-gray-300 transition-opacity duration-300 ${activeSection === 2 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            {/* Section 1: Session Selection */}
+            <div className={`absolute inset-0 px-8 space-y-4 text-gray-300 transition-opacity duration-300 ${activeSection === 1 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
               <h3 className="text-xl font-semibold text-rose-300">Choose Your Experience</h3>
               <Tabs defaultValue="yacht" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 bg-black/20">
@@ -325,11 +213,8 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                           <p className="text-sm text-gray-400">Available: {session.available_capacity}</p>
                         </div>
                         <div className="text-right">
-                          <p className={isSubscribed ? 'line-through text-gray-500' : ''}>
-                            ${session.price}
-                          </p>
                           <p className="font-bold text-rose-300">
-                            ${isSubscribed ? 0 : session.price}
+                            ${session.price}
                           </p>
                           <Button
                             onClick={() => setSelectedYachtSession(session)}
@@ -357,11 +242,8 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                           <p className="text-sm text-gray-400">Available: {session.available_capacity}</p>
                         </div>
                         <div className="text-right">
-                          <p className={isSubscribed ? 'line-through text-gray-500' : ''}>
-                            ${session.price}
-                          </p>
                           <p className="font-bold text-rose-300">
-                            ${isSubscribed ? session.member_price : session.price}
+                            ${session.price}
                           </p>
                           <Button
                             onClick={() => setSelectedWellnessSession(session)}
@@ -387,11 +269,8 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                           <p>{drink.name}</p>
                         </div>
                         <div className="text-right">
-                          <p className={isSubscribed ? 'line-through text-gray-500' : ''}>
-                            ${drink.price_non_member}
-                          </p>
                           <p className="font-bold text-rose-300">
-                            ${isSubscribed ? drink.price_member : drink.price_non_member}
+                            ${drink.price_non_member}
                           </p>
                           <Button
                             onClick={() => setSelectedDrinks(prev => [...prev, drink])}
@@ -409,7 +288,7 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                           {selectedDrinks.map((drink, index) => (
                             <li key={`${drink.id}-${index}`} className="flex justify-between">
                               <span>{drink.name}</span>
-                              <span>${isSubscribed ? drink.price_member : drink.price_non_member}</span>
+                              <span>${drink.price_non_member}</span>
                             </li>
                           ))}
                         </ul>
@@ -428,8 +307,8 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
               )}
             </div>
 
-            {/* Section 3: Checkout */}
-            <div className={`absolute inset-0 px-8 space-y-4 text-gray-300 transition-opacity duration-300 ${activeSection === 3 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            {/* Section 2: Checkout */}
+            <div className={`absolute inset-0 px-8 space-y-4 text-gray-300 transition-opacity duration-300 ${activeSection === 2 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
               <h3 className="text-xl font-semibold text-rose-300">Review & Confirm</h3>
               <div className="space-y-6">
                 {/* Date Summary */}
@@ -447,11 +326,8 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                         <p>{selectedYachtSession.start_time} - {selectedYachtSession.end_time}</p>
                       </div>
                       <div className="text-right">
-                        <p className={isSubscribed ? 'line-through text-gray-500' : ''}>
-                          ${selectedYachtSession.price}
-                        </p>
                         <p className="font-bold text-rose-300">
-                          ${isSubscribed ? 0 : selectedYachtSession.price}
+                          ${selectedYachtSession.price}
                         </p>
                       </div>
                     </div>
@@ -470,11 +346,8 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className={isSubscribed ? 'line-through text-gray-500' : ''}>
-                          ${selectedWellnessSession.price}
-                        </p>
                         <p className="font-bold text-rose-300">
-                          ${isSubscribed ? selectedWellnessSession.member_price : selectedWellnessSession.price}
+                          ${selectedWellnessSession.price}
                         </p>
                       </div>
                     </div>
@@ -490,11 +363,8 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                         <div key={`${drink.id}-${index}`} className="flex justify-between items-center">
                           <p>{drink.name}</p>
                           <div className="text-right">
-                            <p className={isSubscribed ? 'line-through text-gray-500' : ''}>
-                              ${drink.price_non_member}
-                            </p>
                             <p className="font-bold text-rose-300">
-                              ${isSubscribed ? drink.price_member : drink.price_non_member}
+                              ${drink.price_non_member}
                             </p>
                           </div>
                         </div>
@@ -511,11 +381,6 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                       ${calculateTotal()}
                     </span>
                   </div>
-                  {isSubscribed && (
-                    <p className="text-sm text-green-400 mt-2">
-                      Member savings: ${calculateSavings()}
-                    </p>
-                  )}
                 </div>
 
                 {/* Confirm Button */}
@@ -523,14 +388,14 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                   onClick={handleBooking}
                   className="w-full bg-rose-500 hover:bg-rose-600 text-white py-3"
                 >
-                  Confirm Booking
+                  Proceed to Payment
                 </Button>
               </div>
             </div>
 
             {/* Progress Indicators */}
             <div className="absolute bottom-0 left-0 right-0 flex justify-center space-x-2">
-              {[0, 1, 2, 3].map((i) => (
+              {[0, 1, 2].map((i) => (
                 <div 
                   key={i}
                   className={`w-2 h-2 rounded-full transition-colors duration-300 ${

@@ -4,11 +4,8 @@ import { useState } from 'react'
 import { VideoBackground } from '@/components/video-background'
 import { Button } from '@/components/ui/button'
 import { ExperienceModal } from '@/components/experience-modal'
-import { BookingsModal } from '@/components/bookings-modal'
-
 export default function HomePage() {
   const [selectedExperience, setSelectedExperience] = useState<string | null>(null)
-  const [isPartyModalOpen, setIsPartyModalOpen] = useState(false)
 
   const experiences = {
     yacht: {
@@ -47,7 +44,6 @@ export default function HomePage() {
 
   return (
     <main className="relative min-h-screen">
-      <BookingsModal isOpen={isPartyModalOpen} onCloseAction={() => setIsPartyModalOpen(false)} />
       <VideoBackground />
       
       <div className="relative z-10 min-h-screen text-white">
@@ -76,15 +72,36 @@ export default function HomePage() {
                 </Button>
               ))}
             </div>
-            <Button 
-              onClick={() => setIsPartyModalOpen(true)}
-              className="mt-12 bg-teal-500/90 hover:bg-teal-600 text-white text-xl px-12 py-6
-                shadow-lg shadow-teal-500/20 transition-all duration-300 
-                hover:shadow-xl hover:shadow-teal-500/30 hover:scale-[1.02] active:scale-100
-                border-2 border-teal-400/20"
-            >
-              Book Now
-            </Button>
+            <div className="flex gap-4 justify-center">
+              <a 
+                href="https://thewaterbar.ae/register" 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                <Button 
+                  className="mt-12 bg-teal-500/90 hover:bg-teal-600 text-white text-xl px-12 py-6
+                    shadow-lg shadow-teal-500/20 transition-all duration-300 
+                    hover:shadow-xl hover:shadow-teal-500/30 hover:scale-[1.02] active:scale-100
+                    border-2 border-teal-400/20"
+                >
+                  Book Now
+                </Button>
+              </a>
+              <a 
+                href="https://fpvbzfybmgofevvv.vercel.app/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                <Button 
+                  className="mt-12 bg-blue-500/90 hover:bg-blue-600 text-white text-xl px-12 py-6
+                    shadow-lg shadow-blue-500/20 transition-all duration-300 
+                    hover:shadow-xl hover:shadow-blue-500/30 hover:scale-[1.02] active:scale-100
+                    border-2 border-blue-400/20"
+                >
+                  Water Tracker
+                </Button>
+              </a>
+            </div>
           </div>
         </div>
 
