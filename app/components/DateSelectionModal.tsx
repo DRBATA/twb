@@ -1,8 +1,8 @@
 import { useState } from "react"
 import { format } from "date-fns"
-import { Calendar } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Calendar } from "@/components/ui/calendar"
 
 interface DateSelectionModalProps {
   isOpen: boolean
@@ -11,7 +11,7 @@ interface DateSelectionModalProps {
 }
 
 export function DateSelectionModal({ isOpen, onClose, onDateSelect }: DateSelectionModalProps) {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date())
 
   const handleDateSelect = () => {
     if (selectedDate) {
@@ -27,7 +27,11 @@ export function DateSelectionModal({ isOpen, onClose, onDateSelect }: DateSelect
           <DialogTitle>Select a Date</DialogTitle>
         </DialogHeader>
         <div className="py-4">
-          <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} className="rounded-md border" />
+          <Calendar 
+            selected={selectedDate} 
+            onSelect={(date) => setSelectedDate(date)}
+            className="rounded-md border" 
+          />
         </div>
         <DialogFooter>
           <Button onClick={handleDateSelect} disabled={!selectedDate}>
@@ -38,4 +42,3 @@ export function DateSelectionModal({ isOpen, onClose, onDateSelect }: DateSelect
     </Dialog>
   )
 }
-

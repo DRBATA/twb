@@ -16,28 +16,28 @@ export default function BlogPage() {
 
   const posts = [
     {
+      title: 'A Sunrise to Remember: Wellness and Views Like No Other',
+      excerpt: 'Our luxury wellness offering has been featured in Timeout Dubai\'s "16 Awesome Things to Do in Dubai This Weekend" - a recognition of our commitment to blending health, beauty, and unforgettable experiences.',
+      image: '/wellness/boat back.webp',
+      date: 'January 27, 2025',
+      tags: ['yacht', 'wellness'],
+      slug: 'wellness-and-views'
+    },
+    {
+      title: 'The Science Behind Chaga: Memory, Immunity, and Stress Support',
+      excerpt: 'Discover the powerful mechanisms by which Chaga mushrooms enhance cognitive function, boost immunity, and help manage stress through natural adaptogenic properties.',
+      image: '/drinks/drinks2.png',
+      date: 'January 27, 2025',
+      tags: ['drinks', 'wellness'],
+      slug: 'chaga-benefits'
+    },
+    {
       title: 'The Science Behind Ice Bath Recovery',
       excerpt: 'Discover how cold exposure therapy enhances physical and mental wellbeing...',
       image: '/wellness/ice_bath_updated.jpg',
       date: 'January 26, 2025',
       tags: ['ice-bath', 'wellness'],
       slug: 'ice-bath-science'
-    },
-    {
-      title: 'Dawn on Dubai Creek: A Morning Ritual',
-      excerpt: 'Experience the tranquility of sunrise yoga sessions aboard our luxury yacht...',
-      image: '/wellness/boat back.webp',
-      date: 'January 25, 2025',
-      tags: ['yacht', 'wellness'],
-      slug: 'dawn-ritual'
-    },
-    {
-      title: 'Crafting Our Signature Wellness Drinks',
-      excerpt: 'Behind the scenes of our carefully curated non-alcoholic beverage selection...',
-      image: '/drinks/drinks1.webp',
-      date: 'January 24, 2025',
-      tags: ['drinks', 'wellness'],
-      slug: 'signature-drinks'
     }
   ]
 

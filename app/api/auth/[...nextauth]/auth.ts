@@ -23,10 +23,9 @@ export const authOptions: AuthOptions = {
           return null
         }
 
-        const result = await pool.query(
-          "SELECT id, email, name, password, subscription_status FROM users WHERE email = $1",
-          [credentials.email],
-        )
+        const result = await pool.query("SELECT id, email, name, password, is_subscribed FROM users WHERE email = $1", [
+          credentials.email,
+        ])
 
         const user = result.rows[0]
 
@@ -44,7 +43,7 @@ export const authOptions: AuthOptions = {
           id: user.id.toString(),
           name: user.name,
           email: user.email,
-          isSubscribed: user.subscription_status === "member",
+          isSubscribed: user.is_subscribed,
         }
       },
     }),

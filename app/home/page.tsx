@@ -38,7 +38,7 @@ export default function HomePage() {
         'Innermost Electrolytes - Essential minerals',
         'Chaga Elixir - Immune support'
       ],
-      images: ['/drinks/drinks1.webp', '/drinks/drinks2.tif', '/drinks/drinks3.webp', '/drinks/drinks4.webp']
+      images: ['/drinks/drinks1.webp', '/drinks/drinks2.png', '/drinks/drinks3.webp', '/drinks/drinks4.webp']
     }
   }
 
@@ -99,6 +99,16 @@ export default function HomePage() {
                     border-2 border-blue-400/20"
                 >
                   Water Tracker
+                </Button>
+              </a>
+              <a href="/blog">
+                <Button 
+                  className="mt-12 bg-purple-500/90 hover:bg-purple-600 text-white text-xl px-12 py-6
+                    shadow-lg shadow-purple-500/20 transition-all duration-300 
+                    hover:shadow-xl hover:shadow-purple-500/30 hover:scale-[1.02] active:scale-100
+                    border-2 border-purple-400/20"
+                >
+                  Blog
                 </Button>
               </a>
             </div>

@@ -6,7 +6,6 @@ import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { SubscriptionPromo } from "./SubscriptionPromo"
-import { DateSelectionModal } from "./DateSelectionModal"
 import { SessionSelection } from "./SessionSelection"
 
 export function WaterBarModal() {
@@ -122,12 +121,6 @@ export function WaterBarModal() {
             <Button onClick={() => setIsDateModalOpen(true)} className="bg-blue-500 hover:bg-blue-600">
               Open Date Selection
             </Button>
-            <DateSelectionModal
-              isOpen={isDateModalOpen}
-              onClose={() => setIsDateModalOpen(false)}
-              onDateSelect={handleDateSelect}
-              availableDates={availableDates}
-            />
           </div>
         )
       case 3:

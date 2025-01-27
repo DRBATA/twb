@@ -87,6 +87,14 @@ const DialogDescription = React.forwardRef<
 ))
 DialogDescription.displayName = DialogPrimitive.Description.displayName
 
+export function DialogFooter({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mt-4">
+      {children}
+    </div>
+  )
+}
+
 export {
   Dialog,
   DialogTrigger,

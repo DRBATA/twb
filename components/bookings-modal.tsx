@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
+import { useSession } from "next-auth/react"
 import { Button } from '@/components/ui/button'
-import { Calendar } from '@/components/ui/calendar'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Calendar } from '@/components/ui/calendar'
+import { SubscriptionPromo } from '@/app/components/SubscriptionPromo'
 
 interface BookingsModalProps {
   isOpen: boolean;
@@ -12,6 +14,7 @@ interface BookingsModalProps {
 }
 
 export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
+  const { data: session } = useSession()
   const [activeSection, setActiveSection] = useState(0)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [availableDates, setAvailableDates] = useState<Date[]>([])
@@ -21,12 +24,14 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
   const [selectedYachtSession, setSelectedYachtSession] = useState<any>(null)
   const [selectedWellnessSession, setSelectedWellnessSession] = useState<any>(null)
   const [selectedDrinks, setSelectedDrinks] = useState<any[]>([])
+  const [isSubscribed, setIsSubscribed] = useState(false)
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && session) {
       fetchAvailableDates()
+      fetchUserSubscriptionStatus()
     }
-  }, [isOpen])
+  }, [isOpen, session])
 
   useEffect(() => {
     if (selectedDate) {
@@ -72,22 +77,59 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
     )
   }
 
+  const fetchUserSubscriptionStatus = async () => {
+    try {
+      const response = await fetch("/api/user/subscription-status")
+      const data = await response.json()
+      setIsSubscribed(data.isSubscribed)
+    } catch (error) {
+      console.error("Error fetching subscription status:", error)
+    }
+  }
+
+  const handleSubscribe = async () => {
+    try {
+      const response = await fetch("/api/subscriptions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: "subscribe" }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to create subscription")
+      }
+
+      const result = await response.json()
+      console.log("Subscription result:", result)
+      setIsSubscribed(true)
+      setActiveSection(1) // Move to date selection after subscribing
+    } catch (error) {
+      console.error("Error creating subscription:", error)
+    }
+  }
+
   const calculateTotal = () => {
     let total = 0
 
-    // Add yacht session cost
+    // Add yacht session cost (free for subscribers)
     if (selectedYachtSession) {
-      total += selectedYachtSession.price
+      total += isSubscribed ? 0 : selectedYachtSession.price
     }
 
-    // Add wellness session cost
+    // Add wellness session cost (discounted for subscribers)
     if (selectedWellnessSession) {
-      total += selectedWellnessSession.price
+      total += isSubscribed 
+        ? selectedWellnessSession.price - 15 // $15 discount for subscribers
+        : selectedWellnessSession.price
     }
 
-    // Add drinks cost
+    // Add drinks cost (discounted for subscribers)
     selectedDrinks.forEach(drink => {
-      total += drink.price_non_member
+      total += isSubscribed 
+        ? drink.price_member // Use member price if available
+        : drink.price_non_member
     })
 
     return total
@@ -129,7 +171,7 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
   }
 
   const handleNext = () => {
-    setActiveSection(prev => Math.min(2, prev + 1))
+    setActiveSection(prev => Math.min(3, prev + 1))
   }
 
   const handleBack = () => {
@@ -160,26 +202,30 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
             </button>
             <button 
               onClick={handleNext}
-              className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/50 backdrop-blur-sm border border-rose-500/20 text-white transition-opacity duration-200 hover:bg-black/70 ${activeSection === 2 ? 'opacity-0' : 'opacity-100'}`}
-              disabled={activeSection === 2}
+              className={`absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-black/50 backdrop-blur-sm border border-rose-500/20 text-white transition-opacity duration-200 hover:bg-black/70 ${activeSection === 3 ? 'opacity-0' : 'opacity-100'}`}
+              disabled={activeSection === 3}
             >
               →
             </button>
 
-            {/* Section 0: Date Selection */}
+            {/* Section 0: Subscription Check */}
             <div className={`absolute inset-0 px-8 space-y-4 text-gray-300 transition-opacity duration-300 ${activeSection === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              <SubscriptionPromo
+                isSubscribed={isSubscribed}
+                onSubscribe={handleSubscribe}
+                onContinue={() => setActiveSection(1)}
+              />
+            </div>
+
+            {/* Section 1: Date Selection */}
+            <div className={`absolute inset-0 px-8 space-y-4 text-gray-300 transition-opacity duration-300 ${activeSection === 1 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
               <h3 className="text-xl font-semibold text-rose-300">Select Your Date</h3>
               <div className="bg-white/5 rounded-lg p-4">
-                <Calendar
+                <Calendar 
                   selected={selectedDate}
                   onSelect={setSelectedDate}
-                  className="rounded-md border border-rose-500/20"
-                  disabled={(date: Date) => {
-                    // Disable past dates
-                    if (date < new Date()) return true;
-                    // Disable dates not in available dates
-                    return isDateDisabled(date);
-                  }}
+                  disabled={isDateDisabled}
+                  className="rounded-md border mx-auto"
                 />
                 {selectedDate && (
                   <div className="mt-4 text-center">
@@ -195,8 +241,8 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
               </div>
             </div>
 
-            {/* Section 1: Session Selection */}
-            <div className={`absolute inset-0 px-8 space-y-4 text-gray-300 transition-opacity duration-300 ${activeSection === 1 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            {/* Section 2: Session Selection */}
+            <div className={`absolute inset-0 px-8 space-y-4 text-gray-300 transition-opacity duration-300 ${activeSection === 2 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
               <h3 className="text-xl font-semibold text-rose-300">Choose Your Experience</h3>
               <Tabs defaultValue="yacht" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 bg-black/20">
@@ -214,7 +260,7 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-rose-300">
-                            ${session.price}
+                            {isSubscribed ? 'Free' : `$${session.price}`}
                           </p>
                           <Button
                             onClick={() => setSelectedYachtSession(session)}
@@ -243,7 +289,8 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-rose-300">
-                            ${session.price}
+                            ${isSubscribed ? session.price - 15 : session.price}
+                            {isSubscribed && <span className="text-sm ml-1 text-green-400">(Member discount)</span>}
                           </p>
                           <Button
                             onClick={() => setSelectedWellnessSession(session)}
@@ -270,7 +317,8 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-rose-300">
-                            ${drink.price_non_member}
+                            ${isSubscribed ? drink.price_member : drink.price_non_member}
+                            {isSubscribed && <span className="text-sm ml-1 text-green-400">(Member price)</span>}
                           </p>
                           <Button
                             onClick={() => setSelectedDrinks(prev => [...prev, drink])}
@@ -288,7 +336,7 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                           {selectedDrinks.map((drink, index) => (
                             <li key={`${drink.id}-${index}`} className="flex justify-between">
                               <span>{drink.name}</span>
-                              <span>${drink.price_non_member}</span>
+                              <span>${isSubscribed ? drink.price_member : drink.price_non_member}</span>
                             </li>
                           ))}
                         </ul>
@@ -307,8 +355,8 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
               )}
             </div>
 
-            {/* Section 2: Checkout */}
-            <div className={`absolute inset-0 px-8 space-y-4 text-gray-300 transition-opacity duration-300 ${activeSection === 2 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+            {/* Section 3: Checkout */}
+            <div className={`absolute inset-0 px-8 space-y-4 text-gray-300 transition-opacity duration-300 ${activeSection === 3 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
               <h3 className="text-xl font-semibold text-rose-300">Review & Confirm</h3>
               <div className="space-y-6">
                 {/* Date Summary */}
@@ -326,9 +374,9 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                         <p>{selectedYachtSession.start_time} - {selectedYachtSession.end_time}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-rose-300">
-                          ${selectedYachtSession.price}
-                        </p>
+                          <p className="font-bold text-rose-300">
+                            {isSubscribed ? 'Free' : `$${selectedYachtSession.price}`}
+                          </p>
                       </div>
                     </div>
                   </div>
@@ -346,9 +394,10 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-rose-300">
-                          ${selectedWellnessSession.price}
-                        </p>
+                          <p className="font-bold text-rose-300">
+                            ${isSubscribed ? selectedWellnessSession.price - 15 : selectedWellnessSession.price}
+                            {isSubscribed && <span className="text-sm ml-1 text-green-400">(Member discount applied)</span>}
+                          </p>
                       </div>
                     </div>
                   </div>
@@ -363,9 +412,10 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
                         <div key={`${drink.id}-${index}`} className="flex justify-between items-center">
                           <p>{drink.name}</p>
                           <div className="text-right">
-                            <p className="font-bold text-rose-300">
-                              ${drink.price_non_member}
-                            </p>
+                          <p className="font-bold text-rose-300">
+                            ${isSubscribed ? drink.price_member : drink.price_non_member}
+                            {isSubscribed && <span className="text-sm ml-1 text-green-400">(Member price)</span>}
+                          </p>
                           </div>
                         </div>
                       ))}
@@ -395,7 +445,7 @@ export function BookingsModal({ isOpen, onCloseAction }: BookingsModalProps) {
 
             {/* Progress Indicators */}
             <div className="absolute bottom-0 left-0 right-0 flex justify-center space-x-2">
-              {[0, 1, 2].map((i) => (
+              {[0, 1, 2, 3].map((i) => (
                 <div 
                   key={i}
                   className={`w-2 h-2 rounded-full transition-colors duration-300 ${

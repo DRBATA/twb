@@ -65,13 +65,25 @@ export function ExperienceModal({ experience, onCloseAction }: ExperienceModalPr
                   key={i} 
                   className="flex-none w-[300px] h-[200px] relative rounded-lg overflow-hidden snap-center"
                 >
-                  <Image
-                    src={src}
-                    alt={`${experience.title} ${i + 1}`}
-                    fill
-                    sizes="300px"
-                    className="object-cover"
-                  />
+                  {src.includes('drinks2.png') ? (
+                    <a href="/blog/chaga-benefits">
+                      <Image
+                        src={src}
+                        alt={`${experience.title} ${i + 1}`}
+                        fill
+                        sizes="300px"
+                        className="object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                      />
+                    </a>
+                  ) : (
+                    <Image
+                      src={src}
+                      alt={`${experience.title} ${i + 1}`}
+                      fill
+                      sizes="300px"
+                      className="object-cover"
+                    />
+                  )}
                 </div>
               ))}
             </div>
